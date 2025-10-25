@@ -1,15 +1,17 @@
 import React, { useState } from "react";
-import { getLoveAPI } from "../api/loveApi";
+import { createLoveAPI } from "../api/loveApi";
+import { useAuth } from "../AuthContext";
 
 export const Register: React.FC = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { token } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const api = getLoveAPI();
+      const api = createLoveAPI(token || "");
       await api.usersControllerCreate({
         username,
         email,
@@ -25,7 +27,7 @@ export const Register: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex items-center justify-center">
       <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-3xl p-10 w-full max-w-md border border-pink-200">
-        <h2 className="text-3xl font-bold text-center text-rose-600 mb-6">
+        <h2 className="!text-3xl font-bold text-center text-rose-600 mb-6">
           💕 Criar Conta
         </h2>
 

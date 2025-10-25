@@ -1,0 +1,97 @@
+
+/* Página de pastas */
+.folders-page {
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(to bottom right, #FFF6F7, #FDECEF, #F7C6C7);
+}
+
+/* Título */
+.folders-page h1 {
+  text-align: center;
+  font-size: 2.25rem;
+  font-weight: bold;
+  color: #D74D58;
+  margin-bottom: 2rem;
+}
+
+/* Mensagens */
+.loading-text {
+  color: #E57373;
+}
+
+.empty-text {
+  color: #F7A6A7;
+  font-weight: 500;
+}
+
+/* Grid */
+.folders-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+@media(min-width: 640px) {
+  .folders-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(min-width: 768px) {
+  .folders-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Card */
+.folder-card {
+  background: white;
+  border: 1px solid #F7C6C7;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.3s;
+}
+
+.folder-card:hover {
+  box-shadow: 0 4px 15px rgba(247, 198, 199, 0.5);
+}
+
+/* Ícone */
+.folder-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  color: white;
+  background: linear-gradient(to bottom right, #E57373, #D74D58);
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Título da pasta */
+.folder-card h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #D74D58;
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+/* Informações */
+.folder-card p.created-by {
+  color: #E57373;
+  font-size: 0.875rem;
+}
+
+.folder-card p.date {
+  color: #F7A6A7;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}

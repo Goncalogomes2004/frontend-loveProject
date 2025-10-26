@@ -14,6 +14,17 @@ export function Login() {
     { x: number; rotate: number; delay: number; emoji: string }[]
   >([]);
   const heartVariants = ["💖", "💗", "💘", "💝", "💞"];
+  useEffect(() => {
+    // Impede o scroll quando o componente está montado
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    // Reativa o scroll quando o componente é desmontado
+    return () => {
+      document.body.style.overflow = "auto";
+      document.documentElement.style.overflow = "auto";
+    };
+  }, []);
 
   useEffect(() => {
     const updateNumHearts = () => {
@@ -69,7 +80,7 @@ export function Login() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex items-center justify-center overflow-hidden p-3">
+    <div className="relative h-screen w-screen bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex flex-col gap-4 items-center justify-center overflow-hidden px-3 -mt-7 sm:-mt-7 md:mt-0">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {hearts.map((heart, i) => (
           <motion.div
@@ -102,7 +113,28 @@ export function Login() {
           </motion.div>
         ))}
       </div>
-
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="bg-transparent    rounded-3xl max-w-md border border-0 relative z-10 px-6 p-4 flex flex-col items-center"
+      >
+        <img
+          src="/logoWithText.png"
+          alt="Logo"
+          className="transition-transform w-20 duration-500 rotate-8"
+        />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="bg-white/90 backdrop-blur-md shadow-xl rounded-3xl max-w-md border border-pink-200 relative z-10 px-6 p-4 flex flex-col items-center"
+      >
+        <p className="mt-3 text-pink-600 font-[500] italic text-lg font-[Great_Vibes,cursive]">
+          for Gonçalo Gomes and Joana Gonçalves 💞
+        </p>
+      </motion.div>
       {/* Restante do cartão de login */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}

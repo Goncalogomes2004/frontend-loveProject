@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { createLoveAPI } from "../../api/loveApi";
+import { useNavigate, useParams } from "react-router-dom";
+import { createLoveAPI, Photo } from "../../api/loveApi";
 import { useAuth } from "../../AuthContext";
-import { Clock, Download } from "lucide-react";
+import { Clock, Download, FolderInput, Info, Trash2 } from "lucide-react";
 import { io } from "socket.io-client";
 import { motion } from "framer-motion";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import FoldersListSelect from "../folders/FoldersListSelect";
 
 interface UserSummary {
   id: number;
@@ -39,6 +41,9 @@ export default function ImageDetailPage() {
   const { user, token } = useAuth();
   const [photo, setPhoto] = useState<PhotoDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [openPhotoId, setOpenPhotoId] = useState<number | null>(null);
+  const [photos, setPhotos] = useState<Photo[]>([]);
 
   const api = createLoveAPI(token || "");
 
@@ -56,7 +61,47 @@ export default function ImageDetailPage() {
       setLoading(false);
     }
   };
+  //Apaga a foto permanentemente
+  const handleRemovePhoto = async (photoIds: string[] | string) => {
+    const ids = Array.isArray(photoIds) ? photoIds : [photoIds];
+    if (
+      !confirm(
+        `Estas foto serão apagadas porque não têm pasta, queres apagar ${ids.length} foto(s)?`
+      )
+    )
+      return;
 
+    try {
+      for (const id of ids) await api.photosControllerRemove(id);
+      setPhotos((prev) => prev.filter((p) => !ids.includes(p.id)));
+      alert("Imagem apagada com sucesso!");
+      navigate("/photosNoFolder");
+    } catch (err) {
+      console.error("Erro ao remover fotos:", err);
+    }
+  };
+  const handleDelete = async (folderId: number) => {
+    if (!confirm("Remover esta foto da pasta?")) return;
+    try {
+      await api.folderPhotosControllerRemovePhoto(folderId.toString(), id!);
+      if (!id) return;
+      setPhotos((prev) => prev.filter((p) => +p.id !== +id));
+      navigate(`/folders/${folderId}`);
+    } catch (err) {
+      console.error("Erro ao remover foto:", err);
+    }
+  };
+
+  const fetchPhotos = async () => {
+    try {
+      const response = await api.photosControllerFindNoFolder("");
+      setPhotos(response.data);
+    } catch (err) {
+      console.error("Erro ao buscar fotos:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
   const socketRef = useRef<any>(null);
   useEffect(() => {
     if (!socketRef.current) {
@@ -146,6 +191,45 @@ export default function ImageDetailPage() {
           className="!absolute !top-2 !left-2 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent !outline-none !shadow-md"
         >
           <Download size={18} />
+        </motion.button>
+        {!photo.folder?.name && (
+          <Dialog
+            open={openPhotoId === +photo.id}
+            onOpenChange={(isOpen) => setOpenPhotoId(isOpen ? +photo.id : null)}
+          >
+            <DialogTrigger asChild>
+              <motion.button
+                whileHover={{ rotate: 10, scale: 1.1 }}
+                className="!absolute !outline-none !bottom-3 !left-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
+              >
+                <FolderInput size={18} />
+              </motion.button>
+            </DialogTrigger>
+
+            <DialogContent className="!w-[90%] !h-[90%] p-0 max-h-full max-w-full !rounded-2xl">
+              <FoldersListSelect
+                imageId={+photo.id}
+                onSuccess={() => {
+                  setOpenPhotoId(null);
+                  fetchPhotos();
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+        <motion.button
+          whileHover={{ rotate: 10, scale: 1.1 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!photo.folder?.name) {
+              handleRemovePhoto(id ? id : "");
+            } else {
+              handleDelete(photo.folder.id);
+            }
+          }}
+          className="!absolute !top-3 !outline-none !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
+        >
+          <Trash2 size={18} />
         </motion.button>
       </motion.div>
 

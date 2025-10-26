@@ -13,8 +13,43 @@ import {
   Upload,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, number } from "framer-motion";
+function usePhotoHeight(nOfColums: number) {
+  const [width, setWidth] = useState(window.innerWidth);
 
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = width < 640;
+  const isTablet = width >= 640 && width < 1024;
+  const isDesktop = width >= 1024;
+
+  if (nOfColums <= 1) {
+    if (isMobile) return "!h-[420px]";
+    if (isTablet) return "!h-[300px]";
+    if (isDesktop) return "!h-[600px]";
+    return "!h-[500px]";
+  }
+  if (nOfColums === 2) {
+    if (isMobile) return "!h-[250px]";
+    if (isTablet) return "!h-[260px]";
+    if (isDesktop) return "!h-[400px]";
+    return "!h-[320px]";
+  }
+  if (nOfColums === 4) {
+    if (isMobile) return "!h-[120px]";
+    if (isTablet) return "!h-[200px]";
+    if (isDesktop) return "!h-[300px]";
+    return "!h-[240px]";
+  }
+  if (isMobile) return "!h-[70px]";
+  if (isTablet) return "!h-[160px]";
+  if (isDesktop) return "!h-[180px]";
+  return "!h-[180px]";
+}
 export default function PhotosNoFolderPage() {
   const { user, token } = useAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -24,8 +59,9 @@ export default function PhotosNoFolderPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
-
+  const [nOfColums, setNOfColums] = useState(window.innerWidth < 640 ? 2 : 4);
   const api = createLoveAPI(token || "");
+  const photoHeightClass = usePhotoHeight(nOfColums);
 
   // Buscar fotos
   const fetchPhotos = async () => {
@@ -138,6 +174,28 @@ export default function PhotosNoFolderPage() {
       >
         📸 Fotos sem Pasta
       </motion.h1>
+      <div className="flex items-center justify-center gap-3 mb-6">
+        {(window.innerWidth > 640
+          ? [2, 4, 6, 8] // Desktop
+          : [1, 2, 4, 6]
+        ) // Mobile
+          .map((num) => (
+            <motion.button
+              key={num}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setNOfColums(num)}
+              className={`!px-5 !py-2 !rounded-full !font-semibold !transition-all !duration-300 !ease-in-out !shadow-md !backdrop-blur-md !border !outline-none
+        ${
+          nOfColums === num
+            ? "!bg-gradient-to-r !from-rose-500 !to-pink-500 !text-white !border-pink-400 !shadow-lg"
+            : "!bg-gradient-to-r !from-white !to-pink-50 !text-rose-500 !border-pink-200 hover:!from-pink-100 hover:!to-white"
+        }`}
+            >
+              {num}️
+            </motion.button>
+          ))}
+      </div>
 
       {loading ? (
         <p className="!text-rose-500 !text-lg animate-pulse">
@@ -173,10 +231,10 @@ export default function PhotosNoFolderPage() {
 
           {/* Grade de Fotos */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="!grid !grid-cols-2 sm:!grid-cols-3 md:!grid-cols-4 !gap-3 sm:!gap-4 md:!gap-6 !w-full !max-w-5xl"
+            style={{
+              gridTemplateColumns: `repeat(${nOfColums}, minmax(0, 1fr))`,
+            }}
+            className="grid gap-1 sm:gap-1 md:gap-6 w-[98%] sm:w-[98%] md:w-[70%] "
           >
             {photos.map((photo, i) => {
               const isSelected = selectedPhotos.includes(+photo.id);
@@ -187,96 +245,109 @@ export default function PhotosNoFolderPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.05 }}
                   whileHover={{ scale: 1.04 }}
-                  className={`!relative !rounded-3xl !overflow-hidden !shadow-md hover:!shadow-2xl !transition-all !duration-300 ${
-                    isSelected
-                      ? "!border-4 !border-pink-400"
-                      : "!border-transparent"
-                  }`}
+                  className={`relative ${
+                    window.innerWidth < 640 && nOfColums > 2
+                      ? "rounded-sm"
+                      : "rounded-3xl"
+                  } overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer
+    ${isSelected ? "border-4 border-pink-400" : "border border-transparent"}`}
                   onClick={(e) => handlePhotoClick(e, +photo.id)}
                 >
                   <img
-                    onClick={() =>
-                      window.open(api.getPhotoURL(photo.code), "_blank")
-                    }
-                    src={api.getPhotoURL(photo.code)}
-                    alt={photo.original_name}
-                    className="!object-cover !w-full !h-52 !cursor-pointer hover:!brightness-105 !transition-all"
-                  />
-
-                  {/* Botões de Ação */}
-                  <motion.button
-                    whileHover={{ scale: 1.15 }}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      const imageUrl = api.getPhotoURL(photo.code);
-                      try {
-                        await api.photoDownloadsControllerRecord(
-                          photo.id.toString(),
-                          user?.id?.toString() || ""
-                        );
-                        const res = await fetch(imageUrl);
-                        const blob = await res.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement("a");
-                        link.href = url;
-                        link.download = photo.original_name || "foto.jpg";
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
-                        window.URL.revokeObjectURL(url);
-                      } catch (err) {
-                        console.error("Erro ao transferir:", err);
-                        alert("Erro ao transferir ou registar o download.");
+                    onClick={() => {
+                      if (
+                        (window.innerWidth < 640 && nOfColums > 2) ||
+                        (window.innerWidth > 640 && nOfColums > 6)
+                      ) {
+                        navigate(`/photo/${photo.id}`);
+                      } else {
+                        window.open(api.getPhotoURL(photo.code), "_blank");
                       }
                     }}
-                    className="!absolute !outline-none !top-3 !left-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
-                  >
-                    <Download size={18} />
-                  </motion.button>
-                  <Dialog
-                    open={openPhotoId === +photo.id}
-                    onOpenChange={(isOpen) =>
-                      setOpenPhotoId(isOpen ? +photo.id : null)
-                    }
-                  >
-                    <DialogTrigger asChild>
+                    src={api.getPhotoURL(photo.code)}
+                    alt={photo.original_name}
+                    className={`object-cover w-full cursor-pointer hover:brightness-105 transition-all ${photoHeightClass}`}
+                  />
+
+                  {/* Botões de ação */}
+                  {((nOfColums <= 2 && window.innerWidth < 640) ||
+                    (window.innerWidth > 640 && nOfColums <= 6)) && (
+                    <>
+                      <motion.button
+                        whileHover={{ scale: 1.15 }}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const imageUrl = api.getPhotoURL(photo.code);
+                          try {
+                            await api.photoDownloadsControllerRecord(
+                              photo.id.toString(),
+                              user?.id?.toString() || ""
+                            );
+                            const res = await fetch(imageUrl);
+                            const blob = await res.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = photo.original_name || "foto.jpg";
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            window.URL.revokeObjectURL(url);
+                          } catch (err) {
+                            console.error("Erro ao transferir:", err);
+                            alert("Erro ao transferir ou registar o download.");
+                          }
+                        }}
+                        className="!absolute !outline-none !top-3 !left-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
+                      >
+                        <Download size={18} />
+                      </motion.button>
+                      <Dialog
+                        open={openPhotoId === +photo.id}
+                        onOpenChange={(isOpen) =>
+                          setOpenPhotoId(isOpen ? +photo.id : null)
+                        }
+                      >
+                        <DialogTrigger asChild>
+                          <motion.button
+                            whileHover={{ rotate: 10, scale: 1.1 }}
+                            className="!absolute !outline-none !bottom-3 !left-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
+                          >
+                            <FolderInput size={18} />
+                          </motion.button>
+                        </DialogTrigger>
+
+                        <DialogContent className="!w-[90%] !h-[90%] p-0 max-h-full max-w-full !rounded-2xl">
+                          <FoldersListSelect
+                            imageId={+photo.id}
+                            onSuccess={() => {
+                              setOpenPhotoId(null);
+                              fetchPhotos();
+                            }}
+                          />
+                        </DialogContent>
+                      </Dialog>
+
                       <motion.button
                         whileHover={{ rotate: 10, scale: 1.1 }}
-                        className="!absolute !outline-none !bottom-3 !left-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
-                      >
-                        <FolderInput size={18} />
-                      </motion.button>
-                    </DialogTrigger>
-
-                    <DialogContent className="!w-[90%] !h-[90%] p-0 max-h-full max-w-full !rounded-2xl">
-                      <FoldersListSelect
-                        imageId={+photo.id}
-                        onSuccess={() => {
-                          setOpenPhotoId(null);
-                          fetchPhotos();
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemovePhoto(photo.id);
                         }}
-                      />
-                    </DialogContent>
-                  </Dialog>
+                        className="!absolute !top-3 !outline-none !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
+                      >
+                        <Trash2 size={18} />
+                      </motion.button>
 
-                  <motion.button
-                    whileHover={{ rotate: 10, scale: 1.1 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemovePhoto(photo.id);
-                    }}
-                    className="!absolute !top-3 !outline-none !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
-                  >
-                    <Trash2 size={18} />
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.15 }}
-                    onClick={() => navigate(`/photo/${photo.id}`)}
-                    className="!absolute !bottom-3 !outline-none !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
-                  >
-                    <Info size={18} />
-                  </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.15 }}
+                        onClick={() => navigate(`/photo/${photo.id}`)}
+                        className="!absolute !bottom-3 !outline-none !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
+                      >
+                        <Info size={18} />
+                      </motion.button>
+                    </>
+                  )}
                 </motion.div>
               );
             })}

@@ -5,7 +5,42 @@ import { useAuth } from "../../AuthContext";
 import { io } from "socket.io-client";
 import { Download, Info, Trash2, Upload } from "lucide-react";
 import { motion } from "framer-motion";
+function usePhotoHeight(nOfColums: number) {
+  const [width, setWidth] = useState(window.innerWidth);
 
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = width < 640;
+  const isTablet = width >= 640 && width < 1024;
+  const isDesktop = width >= 1024;
+
+  if (nOfColums <= 1) {
+    if (isMobile) return "!h-[420px]";
+    if (isTablet) return "!h-[300px]";
+    if (isDesktop) return "!h-[600px]";
+    return "!h-[500px]";
+  }
+  if (nOfColums === 2) {
+    if (isMobile) return "!h-[250px]";
+    if (isTablet) return "!h-[260px]";
+    if (isDesktop) return "!h-[400px]";
+    return "!h-[320px]";
+  }
+  if (nOfColums === 4) {
+    if (isMobile) return "!h-[120px]";
+    if (isTablet) return "!h-[200px]";
+    if (isDesktop) return "!h-[300px]";
+    return "!h-[240px]";
+  }
+  if (isMobile) return "!h-[70px]";
+  if (isTablet) return "!h-[160px]";
+  if (isDesktop) return "!h-[180px]";
+  return "!h-[180px]";
+}
 export default function FolderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { token, user } = useAuth();
@@ -14,6 +49,8 @@ export default function FolderDetailPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
+  const [nOfColums, setNOfColums] = useState(window.innerWidth < 640 ? 2 : 4);
+  const photoHeightClass = usePhotoHeight(nOfColums);
 
   const api = createLoveAPI(token || "");
 
@@ -111,7 +148,28 @@ export default function FolderDetailPage() {
       >
         📸 Fotos Da Pasta
       </motion.h1>
-
+      <div className="flex items-center justify-center gap-3 mb-6">
+        {(window.innerWidth > 640
+          ? [2, 4, 6, 8] // Desktop
+          : [1, 2, 4, 6]
+        ) // Mobile
+          .map((num) => (
+            <motion.button
+              key={num}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setNOfColums(num)}
+              className={`!px-5 !py-2 !rounded-full !font-semibold !transition-all !duration-300 !ease-in-out !shadow-md !backdrop-blur-md !border !outline-none
+        ${
+          nOfColums === num
+            ? "!bg-gradient-to-r !from-rose-500 !to-pink-500 !text-white !border-pink-400 !shadow-lg"
+            : "!bg-gradient-to-r !from-white !to-pink-50 !text-rose-500 !border-pink-200 hover:!from-pink-100 hover:!to-white"
+        }`}
+            >
+              {num}️
+            </motion.button>
+          ))}
+      </div>
       {loading ? (
         <p className="!text-rose-500 !text-lg animate-pulse">
           A carregar fotos com amor... 💖
@@ -120,79 +178,96 @@ export default function FolderDetailPage() {
         <>
           {/* Grade de Fotos */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="!grid !grid-cols-2 sm:!grid-cols-3 md:!grid-cols-4 !gap-4 sm:!gap-6 !w-full !max-w-5xl"
+            style={{
+              gridTemplateColumns: `repeat(${nOfColums}, minmax(0, 1fr))`,
+            }}
+            className="grid gap-1 sm:gap-1 md:gap-6 w-[98%] sm:w-[98%] md:w-[70%] "
           >
-            {photos.map((photo, i) => (
-              <motion.div
-                key={photo.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
-                whileHover={{ scale: 1.04 }}
-                className="!relative !rounded-3xl !overflow-hidden !shadow-md hover:!shadow-2xl !transition-all !duration-300"
-              >
-                <img
-                  onClick={() =>
-                    window.open(api.getPhotoURL(photo.code), "_blank")
-                  }
-                  src={api.getPhotoURL(photo.code)}
-                  alt={photo.original_name}
-                  className="!object-cover !w-full !h-52 !cursor-pointer hover:!brightness-105 !transition-all"
-                />
-
-                {/* Botão de Info */}
-                <motion.button
-                  whileHover={{ scale: 1.15 }}
-                  onClick={() => navigate(`/photo/${photo.id}`)}
-                  className="!absolute !bottom-3 !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent !outline-none"
+            {photos.map((photo, i) => {
+              return (
+                <motion.div
+                  key={photo.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  whileHover={{ scale: 1.04 }}
+                  className={`relative ${
+                    window.innerWidth < 640 && nOfColums > 2
+                      ? "rounded-sm"
+                      : "rounded-3xl"
+                  } overflow-hidden shadow-md hover:shadow-2xl cursor-pointer`}
                 >
-                  <Info size={18} />
-                </motion.button>
+                  <img
+                    onClick={() => {
+                      if (
+                        (window.innerWidth < 640 && nOfColums > 2) ||
+                        (window.innerWidth > 640 && nOfColums > 6)
+                      ) {
+                        navigate(`/photo/${photo.id}`);
+                      } else {
+                        window.open(api.getPhotoURL(photo.code), "_blank");
+                      }
+                    }}
+                    src={api.getPhotoURL(photo.code)}
+                    alt={photo.original_name}
+                    className={`object-cover w-full cursor-pointer hover:brightness-105 transition-all ${photoHeightClass}`}
+                  />
+                  {((nOfColums <= 2 && window.innerWidth < 640) ||
+                    (window.innerWidth > 640 && nOfColums <= 6)) && (
+                    <>
+                      <motion.button
+                        whileHover={{ scale: 1.15 }}
+                        onClick={() => navigate(`/photo/${photo.id}`)}
+                        className="!absolute !bottom-3 !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent !outline-none"
+                      >
+                        <Info size={18} />
+                      </motion.button>
 
-                {/* Botão de Remover */}
-                <motion.button
-                  whileHover={{ rotate: 15, scale: 1.1 }}
-                  onClick={() => handleDelete(+photo.id)}
-                  className="!absolute !top-3 !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent !outline-none"
-                >
-                  <Trash2 size={18} />
-                </motion.button>
+                      {/* Botão de Remover */}
+                      <motion.button
+                        whileHover={{ rotate: 15, scale: 1.1 }}
+                        onClick={() => handleDelete(+photo.id)}
+                        className="!absolute !top-3 !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent !outline-none"
+                      >
+                        <Trash2 size={18} />
+                      </motion.button>
 
-                {/* Botão de Download */}
-                <motion.button
-                  whileHover={{ scale: 1.15 }}
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    const imageUrl = api.getPhotoURL(photo.code);
-                    try {
-                      await api.photoDownloadsControllerRecord(
-                        photo.id.toString(),
-                        user?.id?.toString() || ""
-                      );
-                      const res = await fetch(imageUrl);
-                      const blob = await res.blob();
-                      const url = window.URL.createObjectURL(blob);
-                      const link = document.createElement("a");
-                      link.href = url;
-                      link.download = photo.original_name || "foto.jpg";
-                      document.body.appendChild(link);
-                      link.click();
-                      link.remove();
-                      window.URL.revokeObjectURL(url);
-                    } catch (err) {
-                      console.error("Erro ao transferir:", err);
-                      alert("Erro ao transferir ou registar o download.");
-                    }
-                  }}
-                  className="!absolute !top-3 !left-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent !outline-none"
-                >
-                  <Download size={18} />
-                </motion.button>
-              </motion.div>
-            ))}
+                      {/* Botão de Download */}
+                      <motion.button
+                        whileHover={{ scale: 1.15 }}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const imageUrl = api.getPhotoURL(photo.code);
+                          try {
+                            await api.photoDownloadsControllerRecord(
+                              photo.id.toString(),
+                              user?.id?.toString() || ""
+                            );
+                            const res = await fetch(imageUrl);
+                            const blob = await res.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = photo.original_name || "foto.jpg";
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            window.URL.revokeObjectURL(url);
+                          } catch (err) {
+                            console.error("Erro ao transferir:", err);
+                            alert("Erro ao transferir ou registar o download.");
+                          }
+                        }}
+                        className="!absolute !top-3 !left-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent !outline-none"
+                      >
+                        <Download size={18} />
+                      </motion.button>
+                    </>
+                  )}
+                  {/* Botão de Info */}
+                </motion.div>
+              );
+            })}
           </motion.div>
 
           {/* Área de Upload */}

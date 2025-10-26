@@ -51,7 +51,7 @@ export default function FolderDetailPage() {
   const navigate = useNavigate();
   const [nOfColums, setNOfColums] = useState(window.innerWidth < 640 ? 2 : 4);
   const photoHeightClass = usePhotoHeight(nOfColums);
-
+  const folderName = localStorage.getItem("selectedFolderName");
   const api = createLoveAPI(token || "");
 
   const fetchPhotos = async () => {
@@ -146,8 +146,12 @@ export default function FolderDetailPage() {
         transition={{ duration: 0.7 }}
         className="!text-3xl !font-bold !text-rose-600 !mb-8 !text-center drop-shadow-sm"
       >
-        📸 Fotos Da Pasta
+        📸 Fotos da Pasta
+        <p className="text-[18px] text-rose-400 font-light italic mt-1 tracking-wide">
+          {folderName}
+        </p>
       </motion.h1>
+
       <div className="flex items-center justify-center gap-3 mb-6">
         {(window.innerWidth > 640
           ? [2, 4, 6, 8] // Desktop

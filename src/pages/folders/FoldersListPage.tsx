@@ -256,6 +256,7 @@ export default function FoldersListPage() {
                   }`}
                   onClick={() => {
                     if (editing[folderIdStr] === undefined) {
+                      localStorage.setItem("selectedFolderName", folder.name);
                       navigate(`/folders/${folder.id}`);
                     }
                   }}

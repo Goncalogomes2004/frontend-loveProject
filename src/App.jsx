@@ -45,7 +45,7 @@ return (
         to="/folders"
         className="relative flex justify-end !text-white font-semibold transition-all duration-300 hover:text-yellow-100 after:content-[''] after:absolute after:w-0 after:h-[2px] after:bg-yellow-100 after:left-1/2 after:-bottom-1 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0"
       >
-        📁 Pastas
+        📁<br></br> Pastas
       </Link>
 </div>
 
@@ -59,7 +59,7 @@ return (
         to="/photosNoFolder"
         className="!text-white  relative   font-semibold transition-all duration-300 hover:text-yellow-100 after:content-[''] after:absolute after:w-0 after:h-[2px] after:!bg-yellow-100 after:left-1/2 after:-bottom-1 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0"
       >
-        🖼️ Sem Pasta
+        🖼️ <br></br>Sem Pasta
       </Link>
 </div>
      

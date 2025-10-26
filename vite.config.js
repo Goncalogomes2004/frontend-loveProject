@@ -11,4 +11,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  preview: {
+    allowedHosts: [
+      "gg_site.randomrestaurante.pt",
+      "site.goncalocgomes.pt",
+      "goncaloggomes.me",
+    ],
+  },
 });

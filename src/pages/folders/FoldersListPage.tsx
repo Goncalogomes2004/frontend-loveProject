@@ -27,6 +27,9 @@ export default function FoldersListPage() {
     {}
   );
   const [showHidden, setShowHidden] = useState(false);
+  const [savingFolders, setSavingFolders] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const socketRef = useRef<any>(null);
 
@@ -108,13 +111,14 @@ export default function FoldersListPage() {
 
   const handleSave = async (folderId: string) => {
     if (!token) return;
-
     const newName = editing[folderId];
     const newFile = editingFiles[folderId];
-
     if (!newName && !newFile) return;
 
     try {
+      // marcar como salvando
+      setSavingFolders((prev) => ({ ...prev, [folderId]: true }));
+
       const api = createLoveAPI(token);
       setWasMe(true);
 
@@ -143,6 +147,7 @@ export default function FoldersListPage() {
         }
       }
 
+      // limpar estados de edição
       const newEditing = { ...editing };
       delete newEditing[folderId];
       setEditing(newEditing);
@@ -152,7 +157,6 @@ export default function FoldersListPage() {
         delete copy[folderId];
         return copy;
       });
-
       setEditingFiles((prev) => {
         const copy = { ...prev };
         delete copy[folderId];
@@ -160,6 +164,9 @@ export default function FoldersListPage() {
       });
     } catch (err) {
       console.error("Erro ao atualizar pasta:", err);
+    } finally {
+      // remover flag de salvando
+      setSavingFolders((prev) => ({ ...prev, [folderId]: false }));
     }
   };
 
@@ -340,9 +347,16 @@ export default function FoldersListPage() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleSave(folderIdStr)}
-                      className="!mt-4 !bg-rose-500 hover:!bg-rose-600 !text-white !py-1 !px-4 !rounded-lg !shadow-md hover:!shadow-lg !transition-all !duration-300 !outline-none !border-transparent"
+                      disabled={!!savingFolders[folderIdStr]}
+                      className={`!mt-4 !bg-rose-500 hover:!bg-rose-600 !text-white !py-1 !px-4 !rounded-lg !shadow-md hover:!shadow-lg !transition-all !duration-300 !outline-none !border-transparent ${
+                        savingFolders[folderIdStr]
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
                     >
-                      💾 Salvar
+                      {savingFolders[folderIdStr]
+                        ? "💾 A Salvar..."
+                        : "💾 Salvar"}
                     </motion.button>
                   ) : (
                     <motion.button

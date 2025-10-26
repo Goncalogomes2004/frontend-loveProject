@@ -13,26 +13,29 @@ export default function CreateFolderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!user?.id) {
+      setMessage("💔 Erro: usuário não autenticado.");
+      return;
+    }
+
     try {
       const api = createLoveAPI(token || "");
       // 1️⃣ Criar a pasta
       const response = await api.foldersControllerCreate({
         name,
-        created_by: user?.id,
-      } as unknown as Folder);
+        created_by: user,
+      } as Folder);
 
       const folderId = response.data.id;
 
-      // 2️⃣ Fazer upload da capa, se houver arquivo selecionado
       if (file) {
         await api.foldersControllerUploadCover(folderId.toString(), file);
-        setMessage(`💖 Pasta "${response.data.name}" criada com sucesso!`);
-      } else {
-        setMessage(`💖 Pasta "${response.data.name}" criada com sucesso!`);
       }
 
+      setMessage(`💖 Pasta "${response.data.name}" criada com sucesso!`);
       setName("");
       setFile(null);
+      window.location.reload();
     } catch (error) {
       console.error(error);
       setMessage("💔 Erro ao criar pasta.");
@@ -40,7 +43,7 @@ export default function CreateFolderPage() {
   };
 
   return (
-    <div className=" flex flex-col items-center justify-center bg-gradient-to-br from-pink-200 via-rose-100 to-pink-300 overflow-hidden relative">
+    <div className="flex flex-col items-center  justify-center bg-gradient-to-br from-pink-200 via-rose-100 to-pink-300 overflow-hidden relative">
       {/* Fundo decorativo animado */}
       <motion.div
         className="absolute top-10 left-10 w-24 h-24 bg-rose-300 rounded-full blur-3xl opacity-40"
@@ -58,7 +61,7 @@ export default function CreateFolderPage() {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", duration: 0.8 }}
-        className="bg-white/90 backdrop-blur-md shadow-2xl rounded-3xl p-8 w-full max-w-md text-center border border-rose-200 relative z-10"
+        className="bg-white/90 backdrop-blur-md  rounded-3xl p-8 w-full max-w-md text-center border border-rose-200 relative z-10"
       >
         <motion.h1
           initial={{ y: -15, opacity: 0 }}
@@ -69,11 +72,13 @@ export default function CreateFolderPage() {
           ✨ Cria uma Nova Pasta 💌
         </motion.h1>
 
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <motion.input
             whileFocus={{ scale: 1.03, borderColor: "#ec4899" }}
             transition={{ type: "spring", stiffness: 200 }}
             type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Nome da pasta..."
             className="w-full px-4 py-2 rounded-lg border border-rose-300 focus:outline-none focus:ring-2 focus:ring-pink-400"
           />
@@ -87,6 +92,9 @@ export default function CreateFolderPage() {
               type="file"
               accept="image/*"
               className="mt-1 w-full px-4 py-2 border-dashed rounded-lg border border-rose-300 focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white/50 cursor-pointer"
+              onChange={(e) =>
+                setFile(e.target.files ? e.target.files[0] : null)
+              }
             />
           </motion.label>
 
@@ -99,6 +107,16 @@ export default function CreateFolderPage() {
             Criar Pasta 💞
           </motion.button>
         </form>
+
+        {message && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-4 text-sm text-rose-600 font-medium"
+          >
+            {message}
+          </motion.p>
+        )}
       </motion.div>
     </div>
   );

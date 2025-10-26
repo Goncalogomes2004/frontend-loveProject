@@ -186,7 +186,7 @@ export default function FoldersListPage() {
   const displayedFolders = folders.filter((f) => showHidden || f.visible);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex flex-col items-center py-12 px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex flex-col items-center py-8 px-6 relative overflow-hidden">
       {/* 🌸 Bolhas animadas de fundo */}
       <motion.div
         className="absolute top-10 left-10 w-24 h-24 bg-rose-300 rounded-full blur-3xl opacity-40"

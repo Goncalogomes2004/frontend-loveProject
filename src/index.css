@@ -128,3 +128,53 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+/* 🌸 Flor animada de fundo */
+/* 🐠 Efeito peixe */
+/* Garante que os links são um contexto de posicionamento */
+.link-fish,
+.link-turtle {
+  position: relative;
+  overflow: visible;
+}
+
+/* 🐠 Peixe atrás do texto */
+.link-fish .icon-left {
+  position: absolute;
+  left: 10px;
+  z-index: -1; /* atrás do texto */
+  transform: translateX(-15px) scale(0);
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.4s ease;
+  color: #4358a3;
+}
+
+/* Hover ou ativo */
+.link-fish:hover .icon-left,
+.link-fish.\!active .icon-left {
+  transform: translateX(0) scale(2);
+  opacity: 1;
+}
+
+/* 🐢 Tartaruga atrás do texto */
+.link-turtle .icon-right {
+  position: absolute;
+  right: 10px;
+  z-index: -1; /* atrás do texto */
+  transform: translateX(15px) scale(0);
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.4s ease;
+  color: #1b9a36;
+}
+
+/* Hover ou ativo */
+.link-turtle:hover .icon-right,
+.link-turtle.\!active .icon-right {
+  transform: translateX(0) scale(2);
+  opacity: 1;
+}
+
+/* Text glow nos ativos */
+.link-fish.\!active,
+.link-turtle.\!active {
+  text-shadow: 0 0 10px rgba(255,255,200,0.6);
+}

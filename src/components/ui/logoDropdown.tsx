@@ -64,7 +64,7 @@ function LogoDropdown() {
         src="/logoWithText.png"
         alt="Logo"
         onClick={handleClick}
-        className={`transition-transform w-30 duration-500 cursor-pointer hover:rotate-12 hover:scale-105 ${
+        className={`transition-transform w-40 sm:w-40 md:w-26 duration-500 cursor-pointer hover:rotate-12 hover:scale-105 ${
           clicked ? "rotate-12 scale-110" : ""
         }`}
       />

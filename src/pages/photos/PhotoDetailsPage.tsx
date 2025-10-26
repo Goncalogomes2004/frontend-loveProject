@@ -95,7 +95,7 @@ export default function ImageDetailPage() {
     return <p className="text-red-500 text-lg">Foto não encontrada</p>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex flex-col items-center py-12 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex flex-col items-center py-8 px-6">
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}

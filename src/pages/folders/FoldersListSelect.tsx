@@ -171,7 +171,7 @@ export default function FoldersListSelect({
   const api = createLoveAPI(token || "");
 
   return (
-    <div className="bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex flex-col items-center py-12 px-6 relative !rounded-lg  overflow-y-auto">
+    <div className="bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex flex-col items-center py-8 px-6 relative !rounded-lg  overflow-y-auto">
       <h1 className="text-4xl font-bold text-rose-600 mb-6 text-center drop-shadow-sm">
         💕 Pastas
       </h1>

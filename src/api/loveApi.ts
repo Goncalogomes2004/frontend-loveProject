@@ -47,7 +47,7 @@ export interface PhotoDownload {
   userId: string
   downloaded_at?: string
 }
-let baseURL = "https://api.randomrestaurante.pt/";
+let baseURL = "https://framelove-api.goncalocgomes.pt/";
 if (typeof window !== "undefined") {
   const url = window.location.host;
   if (url.includes(":5173")) {

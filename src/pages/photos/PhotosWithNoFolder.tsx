@@ -67,7 +67,7 @@ export default function PhotosNoFolderPage() {
   const socketRef = useRef<any>(null);
   useEffect(() => {
     if (!socketRef.current) {
-      let baseURL = "https://api.randomrestaurante.pt/";
+      let baseURL = "https://framelove-api.goncalocgomes.pt/";
       if (typeof window !== "undefined") {
         const url = window.location.host;
         if (url.includes(":5173")) {

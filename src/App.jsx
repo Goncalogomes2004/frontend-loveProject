@@ -18,24 +18,18 @@ function ProtectedRoute({ children }) {
   const { token } = useAuth();
   return token ? children : <Navigate to="/login" replace />;
 }
-
 function AppRoutes() {
   const { token } = useAuth();
   const location = useLocation();
   const [clicked, setClicked] = useState(false);
 
   const handleClick = () => setClicked(!clicked);
-
-  // Verifica se estamos na página de login ou registo
   const hideNavbar = location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <>
-      {/* 🌈 Navbar só se não estivermos no login ou register */}
       {!hideNavbar && (
         <nav className="fixed top-0 left-0 right-0 z-50 !h-18 bg-gradient-to-r from-pink-400 via-rose-400 to-pink-500 text-white shadow-lg flex items-center justify-between px-6 backdrop-blur-sm animate-gradient-x">
-          
-          {/* 📁 Pastas */}
           <div className="flex items-center justify-end !h-full relative w-full mr-10">
             <Link
               to="/folders"
@@ -50,12 +44,10 @@ function AppRoutes() {
             </Link>
           </div>
 
-          {/* 🌸 Logo */}
           <div className="flex items-center justify-center">
             <LogoDropdown />
           </div>
 
-          {/* 🐢 Sem Pasta */}
           <div className="flex items-center justify-start !h-full relative w-full ml-10">
             <Link
               to="/photosNoFolder"
@@ -72,8 +64,7 @@ function AppRoutes() {
         </nav>
       )}
 
-      {/* ✨ Área principal */}
-      <main className={`main-content  !p-0 animate-fadeInUp min-h-screen ${hideNavbar ? '' : 'mt-18 '}`}>
+      <main className={`main-content !p-0 animate-fadeInUp min-h-screen ${hideNavbar ? '' : 'mt-18 '}`}>
         <Routes>
           {/* Login e Registo */}
           <Route path="/login" element={<Login />} />
@@ -96,7 +87,7 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
-            <Route
+          <Route
             path="/photo-viewer"
             element={
               <ProtectedRoute>
@@ -132,10 +123,15 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
+
+          {/* 🔥 Catch-all route */}
+          <Route
+            path="*"
+            element={<Navigate to={token ? "/folders" : "/login"} replace />}
+          />
         </Routes>
       </main>
 
-      {/* 🌸 Animações globais */}
       <style>
         {`
           @keyframes gradient-x {

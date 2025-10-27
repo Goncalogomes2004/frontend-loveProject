@@ -112,6 +112,9 @@ export default function PhotosNoFolderPage() {
       }
       socketRef.current = io(baseURL);
       socketRef.current.on("noFolderUpdate", () => fetchPhotos());
+      socketRef.current.on("imageAdded", () => {
+        fetchPhotos();
+      });
     }
 
     return () => {
@@ -174,6 +177,29 @@ export default function PhotosNoFolderPage() {
       >
         📸 Fotos sem Pasta
       </motion.h1>
+      {photos.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="!w-full sm:!w-96 !mb-6 flex justify-center"
+        >
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() =>
+              navigate(`/photo-viewer`, {
+                state: {
+                  ids: photos.map((p) => p.id),
+                  currentId: photos[0].id,
+                },
+              })
+            }
+            className="!px-4 !py-2 !rounded-lg !bg-rose-500 !text-white !text-xs !shadow-md !border-transparent !outline-none"
+          >
+            Visualizar Todas
+          </motion.button>
+        </motion.div>
+      )}
       <div className="flex items-center justify-center gap-3 mb-6">
         {(window.innerWidth > 640
           ? [2, 4, 6, 8] // Desktop

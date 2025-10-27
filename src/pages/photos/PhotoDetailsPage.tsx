@@ -4,9 +4,15 @@ import { createLoveAPI, Photo } from "../../api/loveApi";
 import { useAuth } from "../../AuthContext";
 import { Clock, Download, FolderInput, Info, Trash2 } from "lucide-react";
 import { io } from "socket.io-client";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import FoldersListSelect from "../folders/FoldersListSelect";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import FoldersChange from "../folders/FolderMove";
 
 interface UserSummary {
   id: number;
@@ -32,10 +38,9 @@ interface PhotoDetails {
   created_at: string;
   uploaded_by: UserSummary | null;
   transferred_by: UserSummary | null;
-  folder: FolderInfo | null;
+  folders: FolderInfo[];
   downloads: DownloadInfo[];
 }
-
 export default function ImageDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user, token } = useAuth();
@@ -44,7 +49,8 @@ export default function ImageDetailPage() {
   const navigate = useNavigate();
   const [openPhotoId, setOpenPhotoId] = useState<number | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
-
+  const [openMoveId, setOpenMoveId] = useState<number | null>(null);
+  const [openDuplicateId, setOpenDuplicateId] = useState<number | null>(null);
   const api = createLoveAPI(token || "");
 
   const fetchPhotoDetails = async () => {
@@ -75,6 +81,7 @@ export default function ImageDetailPage() {
       for (const id of ids) await api.photosControllerRemove(id);
       setPhotos((prev) => prev.filter((p) => !ids.includes(p.id)));
       alert("Imagem apagada com sucesso!");
+
       navigate("/photosNoFolder");
     } catch (err) {
       console.error("Erro ao remover fotos:", err);
@@ -86,7 +93,11 @@ export default function ImageDetailPage() {
       await api.folderPhotosControllerRemovePhoto(folderId.toString(), id!);
       if (!id) return;
       setPhotos((prev) => prev.filter((p) => +p.id !== +id));
-      navigate(`/folders/${folderId}`);
+      if (photo?.folders.length && photo.folders.length > 0) {
+        fetchPhotoDetails();
+      } else {
+        navigate(`/folders/${folderId}`);
+      }
     } catch (err) {
       console.error("Erro ao remover foto:", err);
     }
@@ -116,6 +127,16 @@ export default function ImageDetailPage() {
       socketRef.current.on("downloaded", (photoId: string) => {
         if (photoId === id) {
           fetchPhotoDetails();
+        }
+      });
+      socketRef.current.on("imageChanged", (photoId: string) => {
+        if (photoId === id) {
+          fetchPhotoDetails();
+        }
+      });
+      socketRef.current.on("imageDeleted", (photoId: string) => {
+        if (photoId === id) {
+          navigate("/photosNoFolder");
         }
       });
     }
@@ -192,7 +213,7 @@ export default function ImageDetailPage() {
         >
           <Download size={18} />
         </motion.button>
-        {!photo.folder?.name && (
+        {!photo.folders[0]?.name ? (
           <Dialog
             open={openPhotoId === +photo.id}
             onOpenChange={(isOpen) => setOpenPhotoId(isOpen ? +photo.id : null)}
@@ -212,25 +233,117 @@ export default function ImageDetailPage() {
                 onSuccess={() => {
                   setOpenPhotoId(null);
                   fetchPhotos();
+                  fetchPhotoDetails();
                 }}
               />
             </DialogContent>
           </Dialog>
+        ) : (
+          <Popover>
+            <PopoverTrigger className="!absolute !outline-none !bottom-3 !left-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent">
+              <FolderInput size={18} />
+            </PopoverTrigger>
+
+            {/* Framer Motion adiciona a animação */}
+            <AnimatePresence>
+              <PopoverContent
+                asChild
+                className="flex flex-col p-0 bg-transparent w-25 gap-1 !shadow-none !border-transparent !m-0"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <Dialog
+                    open={openDuplicateId === +photo.id}
+                    onOpenChange={(isOpen) =>
+                      setOpenDuplicateId(isOpen ? +photo.id : null)
+                    }
+                  >
+                    <DialogTrigger asChild>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="!w-full !px-4 !py-2 !rounded-full !font-semibold !text-rose-600 
+                       !bg-gradient-to-r !from-white !to-rose-100 
+                       hover:!from-rose-500 hover:!to-pink-500 hover:!text-white
+                       !transition-all !duration-300 !shadow-md !outline-none !border !border-pink-200"
+                      >
+                        Duplicar
+                      </motion.button>
+                    </DialogTrigger>
+
+                    <DialogContent className="!w-[90%] !h-[90%] p-0 max-h-full max-w-full !rounded-2xl">
+                      <FoldersListSelect
+                        imageId={+photo.id}
+                        onSuccess={() => {
+                          setOpenDuplicateId(null);
+                          fetchPhotoDetails();
+                        }}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                </motion.div>
+              </PopoverContent>
+            </AnimatePresence>
+          </Popover>
         )}
-        <motion.button
-          whileHover={{ rotate: 10, scale: 1.1 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!photo.folder?.name) {
-              handleRemovePhoto(id ? id : "");
-            } else {
-              handleDelete(photo.folder.id);
-            }
-          }}
-          className="!absolute !top-3 !outline-none !right-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent"
-        >
-          <Trash2 size={18} />
-        </motion.button>
+        <Popover>
+          <PopoverTrigger className="!absolute !top-3 !right-3 !outline-none !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent">
+            <Trash2 size={18} />
+          </PopoverTrigger>
+
+          <AnimatePresence>
+            <PopoverContent
+              asChild
+              className="flex flex-col p-0 bg-transparent w-36 gap-1 !shadow-none !border-transparent !m-0"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                {photo.folders.length === 0 ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemovePhoto(id ? id : "");
+                    }}
+                    className="!w-full !px-4 !py-2 !rounded-full !font-semibold !text-red-600 
+              !bg-gradient-to-r !from-white !to-rose-100 
+              hover:!from-red-500 hover:!to-pink-500 hover:!text-white
+              !transition-all !duration-300 !shadow-md !outline-none !border !border-pink-200"
+                  >
+                    Apagar imagem
+                  </motion.button>
+                ) : (
+                  photo.folders.map((folder) => (
+                    <motion.button
+                      key={folder.id}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(folder.id);
+                      }}
+                      className="!w-full  !py-2 !rounded-full !font-semibold !text-red-600 
+                !bg-gradient-to-r !from-white !to-rose-100 
+                hover:!from-red-500 hover:!to-pink-500 hover:!text-white
+                !transition-all !duration-300 !shadow-md !outline-none !border !border-pink-200"
+                    >
+                      {folder.name}
+                    </motion.button>
+                  ))
+                )}
+              </motion.div>
+            </PopoverContent>
+          </AnimatePresence>
+        </Popover>
       </motion.div>
 
       <motion.div
@@ -248,7 +361,12 @@ export default function ImageDetailPage() {
           {photo.uploaded_by?.name || "Desconhecido"}
         </p>
         <p>
-          <strong>Pasta:</strong> {photo.folder?.name || "Sem pasta"}
+          <p>
+            <strong>Pastas:</strong>{" "}
+            {photo.folders.length > 0
+              ? photo.folders.map((f) => f.name).join(", ")
+              : "Sem pasta"}
+          </p>{" "}
         </p>
       </motion.div>
 

@@ -12,10 +12,12 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 interface FoldersListSelectProps {
   imageId: number;
+  currentFolderId: string;
   onSuccess?: () => void;
 }
-export default function FoldersListSelect({
+export default function FoldersChange({
   imageId,
+  currentFolderId,
   onSuccess,
 }: FoldersListSelectProps) {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -33,6 +35,17 @@ export default function FoldersListSelect({
   const [showHidden, setShowHidden] = useState(false);
 
   const socketRef = useRef<any>(null);
+
+  const handleDelete = async (folderId: string, photoId: number) => {
+    try {
+      await api.folderPhotosControllerRemovePhoto(
+        folderId!,
+        photoId.toString()
+      );
+    } catch (err) {
+      console.error("Erro ao remover foto:", err);
+    }
+  };
 
   const fetchFolders = async () => {
     try {
@@ -209,11 +222,11 @@ export default function FoldersListSelect({
                       await api.folderPhotosControllerAddPhoto(folderId!, {
                         id: imageId.toString(),
                       });
-                      onSuccess?.(); // ✅ fecha o dialog
-                    } catch (err: any) {
-                      console.error(err);
+                      await handleDelete(currentFolderId, imageId);
 
-                      // Verifica se o erro retornado é de conflito (foto já existe)
+                      onSuccess?.(); // ✅ fecha o dialog
+                    } catch (err) {
+                      console.error(err);
                       alert("⚠️ Esta foto já está nesta pasta!");
                     }
                   }}
@@ -235,9 +248,9 @@ export default function FoldersListSelect({
                       <input
                         type="text"
                         value={editing[folderIdStr]}
-                        onChange={(e) =>
-                          handleEditChange(folderIdStr, e.target.value)
-                        }
+                        onChange={(e) => {
+                          handleEditChange(folderIdStr, e.target.value);
+                        }}
                         className="w-full px-3 py-1 rounded-lg border border-rose-300 focus:outline-none focus:ring-2 focus:ring-pink-400 mb-2"
                       />
                     </div>

@@ -5,6 +5,7 @@ import { Register } from "./pages/register";
 import CreateFolderPage from "./pages/folders/CreateFolderPage";
 import FolderDetailPage from "./pages/photos/FolderDetailPage";
 import PhotosNoFolderPage from "./pages/photos/PhotosWithNoFolder";
+import PhotoViewerPage from "./pages/photos/PhotoViewerPage";
 import ImageDetailPage from "./pages/photos/PhotoDetailsPage";
 import FoldersListPage from "./pages/folders/FoldersListPage";
 import { Login } from './pages/login/login';
@@ -92,6 +93,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <CreateFolderPage />
+              </ProtectedRoute>
+            }
+          />
+            <Route
+            path="/photo-viewer"
+            element={
+              <ProtectedRoute>
+                <PhotoViewerPage />
               </ProtectedRoute>
             }
           />

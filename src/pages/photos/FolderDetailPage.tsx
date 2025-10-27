@@ -3,8 +3,16 @@ import { useNavigate, useParams } from "react-router-dom";
 import { createLoveAPI, Photo } from "../../api/loveApi";
 import { useAuth } from "../../AuthContext";
 import { io } from "socket.io-client";
-import { Download, Info, Trash2, Upload } from "lucide-react";
-import { motion } from "framer-motion";
+import { Download, FolderInput, Info, Trash2, Upload } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import FoldersListSelect from "../folders/FoldersListSelect";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import FoldersChange from "../folders/FolderMove";
 function usePhotoHeight(nOfColums: number) {
   const [width, setWidth] = useState(window.innerWidth);
 
@@ -53,7 +61,8 @@ export default function FolderDetailPage() {
   const photoHeightClass = usePhotoHeight(nOfColums);
   const folderName = localStorage.getItem("selectedFolderName");
   const api = createLoveAPI(token || "");
-
+  const [openMoveId, setOpenMoveId] = useState<number | null>(null);
+  const [openDuplicateId, setOpenDuplicateId] = useState<number | null>(null);
   const fetchPhotos = async () => {
     try {
       const response = await api.folderPhotosControllerFindByFolder(id!);
@@ -150,6 +159,16 @@ export default function FolderDetailPage() {
         <p className="text-[18px] text-rose-400 font-light italic mt-1 tracking-wide">
           {folderName}
         </p>
+        <button
+          onClick={() =>
+            navigate(`/photo-viewer`, {
+              state: { ids: photos.map((p) => p.id), currentId: photos[0].id },
+            })
+          }
+          className="!px-4 !py-2 !rounded-lg !bg-rose-500 !text-white !text-xs !border-transparent !outline-none"
+        >
+          Visualizar Todas
+        </button>
       </motion.h1>
 
       <div className="flex items-center justify-center gap-3 mb-6">
@@ -219,6 +238,87 @@ export default function FolderDetailPage() {
                   {((nOfColums <= 2 && window.innerWidth < 640) ||
                     (window.innerWidth > 640 && nOfColums <= 6)) && (
                     <>
+                      <Popover>
+                        <PopoverTrigger className="!absolute !outline-none !bottom-3 !left-3 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !border-transparent">
+                          <FolderInput size={18} />
+                        </PopoverTrigger>
+
+                        {/* Framer Motion adiciona a animação */}
+                        <AnimatePresence>
+                          <PopoverContent
+                            asChild
+                            className="flex flex-col p-0 bg-transparent w-25 gap-1 !shadow-none !border-transparent !m-0"
+                          >
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.2, ease: "easeOut" }}
+                            >
+                              <Dialog
+                                open={openMoveId === +photo.id}
+                                onOpenChange={(isOpen) =>
+                                  setOpenMoveId(isOpen ? +photo.id : null)
+                                }
+                              >
+                                <DialogTrigger asChild>
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    className="!w-full !px-4 !py-2 !rounded-full !font-semibold !text-rose-600  
+             !bg-gradient-to-r !from-white !to-rose-100 
+             hover:!from-rose-500 hover:!to-pink-500 hover:!text-white
+             !transition-all !duration-300 !shadow-md !outline-none !border !border-pink-200"
+                                  >
+                                    Mover
+                                  </motion.button>
+                                </DialogTrigger>
+
+                                <DialogContent className="!w-[90%] !h-[90%] p-0 max-h-full max-w-full !rounded-2xl">
+                                  <FoldersChange
+                                    imageId={+photo.id}
+                                    currentFolderId={id ? id : ""}
+                                    onSuccess={() => {
+                                      setOpenMoveId(null);
+                                      fetchPhotos();
+                                    }}
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                              <Dialog
+                                open={openDuplicateId === +photo.id}
+                                onOpenChange={(isOpen) =>
+                                  setOpenDuplicateId(isOpen ? +photo.id : null)
+                                }
+                              >
+                                <DialogTrigger asChild>
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    className="!w-full !px-4 !py-2 !rounded-full !font-semibold !text-rose-600 
+             !bg-gradient-to-r !from-white !to-rose-100 
+             hover:!from-rose-500 hover:!to-pink-500 hover:!text-white
+             !transition-all !duration-300 !shadow-md !outline-none !border !border-pink-200"
+                                  >
+                                    Duplicar
+                                  </motion.button>
+                                </DialogTrigger>
+
+                                <DialogContent className="!w-[90%] !h-[90%] p-0 max-h-full max-w-full !rounded-2xl">
+                                  <FoldersListSelect
+                                    imageId={+photo.id}
+                                    onSuccess={() => {
+                                      setOpenDuplicateId(null);
+                                      fetchPhotos();
+                                    }}
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                            </motion.div>
+                          </PopoverContent>
+                        </AnimatePresence>
+                      </Popover>
+
                       <motion.button
                         whileHover={{ scale: 1.15 }}
                         onClick={() => navigate(`/photo/${photo.id}`)}
@@ -226,7 +326,6 @@ export default function FolderDetailPage() {
                       >
                         <Info size={18} />
                       </motion.button>
-
                       {/* Botão de Remover */}
                       <motion.button
                         whileHover={{ rotate: 15, scale: 1.1 }}
@@ -235,7 +334,6 @@ export default function FolderDetailPage() {
                       >
                         <Trash2 size={18} />
                       </motion.button>
-
                       {/* Botão de Download */}
                       <motion.button
                         whileHover={{ scale: 1.15 }}

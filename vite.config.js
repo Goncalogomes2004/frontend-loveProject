@@ -31,7 +31,7 @@ export default defineConfig({
             type: "image/png",
           },
           {
-            src: "/logoWithText.png",
+            src: "/fullLogo.png",
             sizes: "512x512",
             type: "image/png",
           },

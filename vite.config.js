@@ -26,7 +26,7 @@ export default defineConfig({
         theme_color: "#0f172a",
         icons: [
           {
-            src: "/transferir.png",
+            src: "/fullLogo.png",
             sizes: "192x192",
             type: "image/png",
           },

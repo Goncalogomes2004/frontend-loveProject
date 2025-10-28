@@ -11,11 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: [
-        "favicon.ico",
-        "logoWithText.png",
-        "apple-touch-icon.png",
-      ],
+      includeAssets: ["favicon.ico", "fullLogo.png", "apple-touch-icon.png"],
       manifest: {
         name: "Framelove",
         short_name: "Framelove",

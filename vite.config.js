@@ -11,7 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "transferir.png", "apple-touch-icon.png"],
+      includeAssets: ["favicon.ico", "fullLogo.ico", "apple-touch-icon.png"],
       manifest: {
         name: "Framelove",
         short_name: "Framelove",
@@ -22,14 +22,14 @@ export default defineConfig({
         theme_color: "#0f172a",
         icons: [
           {
-            src: "/transferir.png",
+            src: "/fullLogo.ico",
             sizes: "192x192",
-            type: "image/png",
+            type: "image/ico",
           },
           {
-            src: "/transferir.png",
+            src: "/fullLogo.ico",
             sizes: "512x512",
-            type: "image/png",
+            type: "image/ico",
           },
         ],
       },

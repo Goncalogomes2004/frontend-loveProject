@@ -91,6 +91,9 @@ export default function FolderDetailPage() {
       socketRef.current.on("imageEdited", (folderId: string) => {
         if (folderId === id) fetchPhotos();
       });
+      socketRef.current.on("folderEdited", () => {
+        fetchPhotos();
+      });
     }
 
     return () => {

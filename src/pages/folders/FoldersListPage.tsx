@@ -216,7 +216,7 @@ export default function FoldersListPage() {
         <p className="text-rose-500 text-lg animate-pulse">
           Carregando com amor... 💖
         </p>
-      ) : filteredFolders.length === 0 ? (
+      ) : displayedFolders.length === 0 ? (
         <p className="text-rose-400 text-lg italic animate-fadeIn">
           Nenhuma pasta encontrada. 💌
         </p>

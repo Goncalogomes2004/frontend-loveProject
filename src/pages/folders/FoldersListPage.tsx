@@ -30,6 +30,7 @@ export default function FoldersListPage() {
   const [savingFolders, setSavingFolders] = useState<Record<string, boolean>>(
     {}
   );
+  const [searchQuery, setSearchQuery] = useState("");
 
   const socketRef = useRef<any>(null);
 
@@ -184,7 +185,9 @@ export default function FoldersListPage() {
   };
 
   const displayedFolders = folders.filter((f) => showHidden || f.visible);
-
+  const filteredFolders = displayedFolders.filter((folder) =>
+    folder.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-rose-100 to-pink-200 flex flex-col items-center py-8 px-6 relative overflow-hidden">
       {/* 🌸 Bolhas animadas de fundo */}
@@ -213,12 +216,22 @@ export default function FoldersListPage() {
         <p className="text-rose-500 text-lg animate-pulse">
           Carregando com amor... 💖
         </p>
-      ) : displayedFolders.length === 0 ? (
+      ) : filteredFolders.length === 0 ? (
         <p className="text-rose-400 text-lg italic animate-fadeIn">
           Nenhuma pasta encontrada. 💌
         </p>
       ) : (
         <>
+          <div className="w-full max-w-2xl mb-6">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="🔍 Procurar pastas..."
+              className="w-full px-4 py-2 rounded-lg !border !border-rose-300 focus:outline-none focus:ring-2 focus:!ring-pink-400 text-rose-600 placeholder-rose-300"
+            />
+          </div>
+
           {/* 💫 Grid de pastas */}
           <motion.div
             initial="hidden"
@@ -233,7 +246,7 @@ export default function FoldersListPage() {
             }}
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-6xl animate-fadeInUp"
           >
-            {displayedFolders.map((folder, index) => {
+            {filteredFolders.map((folder, index) => {
               const folderId = folder.id;
               const folderIdStr = folder.id.toString();
               const coverUrl =

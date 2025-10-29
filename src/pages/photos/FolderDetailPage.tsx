@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { createLoveAPI, Photo } from "../../api/loveApi";
+import { createLoveAPI, Folder, Photo } from "../../api/loveApi";
 import { useAuth } from "../../AuthContext";
 import { io } from "socket.io-client";
 import { Download, FolderInput, Info, Trash2, Upload } from "lucide-react";
@@ -62,7 +62,21 @@ export default function FolderDetailPage() {
   const folderName = localStorage.getItem("selectedFolderName");
   const api = createLoveAPI(token || "");
   const [openMoveId, setOpenMoveId] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingPage, setIsDraggingPage] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [openDuplicateId, setOpenDuplicateId] = useState<number | null>(null);
+
+  const fetchFolder = async () => {
+    try {
+      const response = await api.foldersControllerFindOne(id!);
+      setSelectedFolder(response.data);
+    } catch (err) {
+      console.error("Erro ao buscar fotos:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
   const fetchPhotos = async () => {
     try {
       const response = await api.folderPhotosControllerFindByFolder(id!);
@@ -92,7 +106,7 @@ export default function FolderDetailPage() {
         if (folderId === id) fetchPhotos();
       });
       socketRef.current.on("folderEdited", () => {
-        fetchPhotos();
+        fetchFolder();
       });
     }
 
@@ -147,11 +161,21 @@ export default function FolderDetailPage() {
   };
 
   useEffect(() => {
-    if (token && id) fetchPhotos();
+    if (token && id) {
+      fetchFolder();
+      fetchPhotos();
+    }
   }, [id, token]);
 
   return (
-    <div className="!min-h-screen !bg-gradient-to-br !from-pink-100 !via-rose-100 !to-pink-200 !flex !flex-col !items-center !py-8 !px-6">
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDraggingPage(true);
+      }}
+      onDragLeave={() => setIsDraggingPage(false)}
+      className="!min-h-screen !bg-gradient-to-br !from-pink-100 !via-rose-100 !to-pink-200 !flex !flex-col !items-center !py-8 !px-6"
+    >
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -160,7 +184,7 @@ export default function FolderDetailPage() {
       >
         📸 Fotos da Pasta
         <p className="text-[18px] text-rose-400 font-light italic mt-1 tracking-wide">
-          {folderName}
+          {selectedFolder?.name}
         </p>
         <button
           onClick={() =>
@@ -401,7 +425,7 @@ export default function FolderDetailPage() {
                           prev.filter((_, i) => i !== idx)
                         )
                       }
-                      className="!absolute !top-2 !right-2 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !p-2 !text-sm"
+                      className="!absolute !top-2 !right-2 !bg-black/40 hover:!bg-black/70 !text-white !rounded-full !px-2 !py-1 !border-transparent  !text-sm !outline-none "
                     >
                       ✖
                     </button>
@@ -410,16 +434,44 @@ export default function FolderDetailPage() {
               </div>
             )}
 
-            <label className="!w-full sm:!w-96 !px-6 !py-4 !border-2 !border-dashed !border-rose-300 !rounded-2xl !cursor-pointer hover:!border-pink-400 hover:!bg-pink-50 !transition-all !duration-300 !text-center !text-rose-500">
+            <label
+              onDrop={(e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files) {
+                  setSelectedFiles((prev) => [
+                    ...prev,
+                    ...Array.from(e.dataTransfer.files),
+                  ]);
+                }
+                setIsDragging(false);
+                setIsDraggingPage(false);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => {
+                setIsDragging(false);
+              }}
+              className={`!w-full sm:!w-96 !px-6 !py-4 !border-2 !border-dashed !rounded-2xl !cursor-pointer !text-center !transition-all duration-300
+      ${
+        isDragging
+          ? "!border-pink-400 !bg-pink-50 h-40"
+          : isDraggingPage
+          ? "border-rose-300 bg-white/0 h-40"
+          : "!border-rose-300 !bg-white/0 h-20"
+      } !text-rose-500 flex justify-center items-center gap-2`}
+            >
               <Upload className="!inline-block !mr-2" size={18} />
-              Escolher Fotos 💞
+              Arraste ou clique para escolher fotos 💞
               <input
                 type="file"
                 accept="image/*"
                 multiple
                 onChange={(e) => {
-                  if (!e.target.files) return;
-                  setSelectedFiles(Array.from(e.target.files));
+                  const files = e.target.files;
+                  if (!files) return;
+                  setSelectedFiles((prev) => [...prev, ...Array.from(files)]);
                 }}
                 className="!hidden"
               />
